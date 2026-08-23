@@ -165,3 +165,10 @@ if ('IntersectionObserver' in window) {
   }, { threshold: 0.12 });
   document.querySelectorAll('.card, .timeline-item, .founder, .dashboard-shell').forEach(element => observer.observe(element));
 }
+
+// Remove a host-injected badge if it appears after the page loads.
+const removeInjectedBadge = () => document.getElementById('nl-badge')?.remove();
+removeInjectedBadge();
+if (document.documentElement) {
+  new MutationObserver(removeInjectedBadge).observe(document.documentElement, { childList: true, subtree: true });
+}
