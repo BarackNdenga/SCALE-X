@@ -1,8 +1,8 @@
 /* SCALE-X V0.1 frontend bridge.
    Après déploiement, définir window.SCALE_X_API_URL avant ce script,
-   ou remplacer la valeur de secours par l'URL publique Render.
+   ou conserver la valeur de secours correspondant à l’API publique Render.
 */
-const API_BASE_URL = (window.SCALE_X_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+const API_BASE_URL = (window.SCALE_X_API_URL || 'https://scale-x-bdlg.onrender.com').replace(/\/+$/, '');
 
 const setText = (id, value) => {
   const element = document.getElementById(id);
