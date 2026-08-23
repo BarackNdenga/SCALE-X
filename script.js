@@ -166,8 +166,16 @@ if ('IntersectionObserver' in window) {
   document.querySelectorAll('.card, .timeline-item, .founder, .dashboard-shell').forEach(element => observer.observe(element));
 }
 
-// Remove a host-injected badge if it appears after the page loads.
-const removeInjectedBadge = () => document.getElementById('nl-badge')?.remove();
+// Remove host-injected badge/HUD nodes if they appear after the page loads.
+const badgeSelectors = '#nl-badge, #netlify-badge, .netlify-badge, [id^="netlify-badge"], [class*="netlify-badge"], [data-netlify-badge]';
+const stripHostNodes = (root) => {
+  root.querySelectorAll?.(badgeSelectors).forEach(node => node.remove());
+  root.querySelectorAll?.('script[src*="/.netlify/scripts/"]').forEach(node => node.remove());
+  root.querySelectorAll?.('*').forEach(node => {
+    if (node.shadowRoot) stripHostNodes(node.shadowRoot);
+  });
+};
+const removeInjectedBadge = () => stripHostNodes(document);
 removeInjectedBadge();
 if (document.documentElement) {
   new MutationObserver(removeInjectedBadge).observe(document.documentElement, { childList: true, subtree: true });
