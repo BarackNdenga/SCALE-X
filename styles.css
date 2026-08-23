@@ -95,3 +95,6 @@ footer{border-top:1px solid rgba(255,255,255,.06);padding:25px 30px;max-width:12
   .cards{grid-template-columns:1fr}.sovereign-points{grid-template-columns:1fr}.timeline-item{grid-template-columns:65px 1fr}.dashboard-results{padding:26px 18px 20px}.upload-panel{padding:22px 18px;gap:15px}.result-topline{align-items:flex-start}.score-ring{width:94px;height:94px;font-size:18px}.metric-grid{grid-template-columns:repeat(2,1fr)}.report-grid{grid-template-columns:1fr}
   footer{display:grid;gap:10px}.founder{margin:0 20px 50px;padding:25px}
 }
+
+/* Remove the host-injected badge from the public presentation. */
+#nl-badge{display:none!important}
