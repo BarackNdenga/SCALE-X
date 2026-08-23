@@ -14,18 +14,17 @@ Le moteur calcule les valeurs manquantes, les doublons, les distributions catég
 | `styles.css` | Design responsive SCALE-X |
 | `script.js` | Import de fichier, appel API et rendu du rapport |
 | `assets/` | Logo SCALE-X |
-| `backend/main.py` | API FastAPI et routes HTTP |
-| `backend/analyzer.py` | Parsing et moteur de calcul du DFS |
-| `backend/requirements.txt` | Dépendances Python du backend |
-| `backend/test_analyzer.py` | Tests des formats et métriques |
-| `backend/README.md` | Instructions détaillées pour Render |
+| `main.py` | API FastAPI et routes HTTP |
+| `analyzer.py` | Parsing et moteur de calcul du DFS |
+| `requirements.txt` | Dépendances Python du backend |
+| `test_analyzer.py` | Tests des formats et métriques |
+| `render.yaml` | Configuration du Web Service Render |
 
 ## Lancer localement
 
 Dans un premier terminal, lancer l’API :
 
 ```bash
-cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
@@ -39,7 +38,7 @@ python -m http.server 8001
 Ouvrir ensuite `http://localhost:8001`. Le frontend utilise `http://localhost:8000` par défaut. Les tests du moteur se lancent avec :
 
 ```bash
-python backend/test_analyzer.py
+python test_analyzer.py
 ```
 
 ## Déploiement conseillé
@@ -50,6 +49,6 @@ Le frontend peut être déployé comme site statique. Le backend doit être dép
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-Dans Render, sélectionner `backend` comme **Root Directory**, utiliser `pip install -r requirements.txt` comme commande de build et définir `FRONTEND_ORIGIN` avec l’URL publique du frontend. Après réception de l’URL publique de l’API, remplacer la valeur de `window.SCALE_X_API_URL` dans `script.js` si nécessaire.
+Dans Render, laisser le **Root Directory** vide, utiliser `pip install -r requirements.txt` comme commande de build et `uvicorn main:app --host 0.0.0.0 --port $PORT` comme commande de démarrage. La variable `FRONTEND_ORIGIN` est déjà renseignée avec `https://scale-x-ia.netlify.app`. Après réception de l’URL publique de l’API, remplacer la valeur de `window.SCALE_X_API_URL` dans `script.js` si nécessaire.
 
 Le backend ne conserve pas les fichiers reçus. Pour cette V0.1, la limite est de 10 MB par fichier et 10 000 lignes par analyse. Les données sensibles doivent être anonymisées avant tout envoi vers une infrastructure cloud.
