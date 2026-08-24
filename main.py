@@ -4,15 +4,16 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from analyzer import MAX_BYTES, MAX_ROWS, analyse_dataset, parse_dataset
+from evaluator import MAX_EVAL_CASES, evaluate_cases
 
 app = FastAPI(
     title="SCALE-X Data Fitness Engine",
-    version="0.1.0",
-    description="Analyse légère de datasets et calcul explicable du Data Fitness Score.",
+    version="0.2.0",
+    description="Moteurs Data Fitness et Model Fitness avec évaluations reproductibles.",
 )
 
 
@@ -36,16 +37,26 @@ app.add_middleware(
 def root() -> dict[str, Any]:
     return {
         "name": "SCALE-X Data Fitness Engine",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "status": "online",
         "docs": "/docs",
-        "endpoint": "POST /analyze",
+        "endpoints": ["POST /analyze", "POST /evaluate"],
     }
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "scalex-data-fitness-engine"}
+
+
+@app.get("/model-config")
+def model_config() -> dict[str, Any]:
+    """Retourne uniquement l’état de configuration, jamais la clé du modèle."""
+    return {
+        "configured": bool(os.getenv("MODEL_API_URL", "").strip()),
+        "model": os.getenv("MODEL_NAME", "configured-model"),
+        "protocol": "OpenAI-compatible JSON chat completion",
+    }
 
 
 @app.post("/analyze")
@@ -71,3 +82,30 @@ async def analyze(file: UploadFile = File(...)) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:  # pragma: no cover — garde-fou API pour la V0.1
         raise HTTPException(status_code=500, detail="L'analyse a échoué. Vérifiez la structure du fichier.") from exc
+
+
+@app.post("/evaluate")
+async def evaluate(
+    file: UploadFile = File(...),
+    criteria: str = Form("accuracy,robustness,consistency,hallucination,refusal,multilingualism,bias"),
+    model_name: str | None = Form(None),
+) -> dict[str, Any]:
+    """Évalue réellement le modèle configuré avec un dataset annoté."""
+    filename = file.filename or "evaluation-dataset"
+    extension = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
+    if extension not in {"csv", "json", "jsonl", "ndjson", "txt"}:
+        raise HTTPException(status_code=415, detail="Format non supporté. Utilisez CSV, JSON, JSONL ou TXT.")
+    if not os.getenv("MODEL_API_URL", "").strip():
+        raise HTTPException(status_code=503, detail="Aucun modèle n'est configuré. Définissez MODEL_API_URL sur le serveur.")
+    data = await file.read()
+    if len(data) > MAX_BYTES:
+        raise HTTPException(status_code=413, detail=f"Fichier trop volumineux. Limite : {MAX_BYTES // (1024 * 1024)} MB.")
+    try:
+        parsed = parse_dataset(filename, data)
+        if len(parsed.rows) > MAX_EVAL_CASES:
+            parsed.rows = parsed.rows[:MAX_EVAL_CASES]
+        return evaluate_cases(parsed.rows, criteria.split(","), model_name)
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:  # pragma: no cover — garde-fou API pour la V0.2
+        raise HTTPException(status_code=500, detail="L'évaluation a échoué. Vérifiez le modèle et la structure du dataset.") from exc

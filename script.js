@@ -166,6 +166,87 @@ if ('IntersectionObserver' in window) {
   document.querySelectorAll('.card, .timeline-item, .founder, .dashboard-shell').forEach(element => observer.observe(element));
 }
 
+const evaluationForm = document.getElementById('evaluation-form');
+const evaluationFile = document.getElementById('evaluation-file');
+const evaluateButton = document.getElementById('evaluate-button');
+
+const renderMfs = (report) => {
+  const results = document.getElementById('evaluation-results');
+  if (results) results.hidden = false;
+  const mfs = report?.mfs || {};
+  const metrics = report?.metrics || {};
+  const score = mfs.score;
+  setText('mfs-score', formatScore(score));
+  setText('mfs-score-ring', formatScore(score));
+  setText('mfs-label', mfs.label || 'UNAVAILABLE');
+  setText('mfs-model', `Modèle : ${report?.model?.name || 'non renseigné'} · ${report?.dataset?.cases_evaluated || 0} cas évalué(s)`);
+  setText('mfs-provenance', report?.provenance?.simulated === false
+    ? `Calculé à partir de ${report.dataset?.cases_evaluated || 0} sortie(s) réellement reçue(s) · aucune simulation`
+    : 'Provenance du rapport indisponible.');
+  const displayMetric = (key, id, suffix = '') => setText(id, metrics[key]?.score == null ? '—' : `${formatScore(metrics[key].score)}${suffix}`);
+  displayMetric('accuracy', 'mfs-accuracy');
+  displayMetric('robustness', 'mfs-robustness');
+  displayMetric('consistency', 'mfs-consistency');
+  displayMetric('hallucination', 'mfs-hallucination');
+  displayMetric('refusal', 'mfs-refusal');
+  displayMetric('bias', 'mfs-bias');
+  const multi = metrics.multilingualism;
+  setText('mfs-dataset', `${report.dataset?.cases_evaluated || 0} cas évalué(s)`);
+  setText('mfs-dataset-details', `${report.dataset?.cases_prepared || 0} cas préparé(s) · ${report.errors?.length || 0} erreur(s)`);
+  setText('mfs-multilingualism', multi?.score == null ? '—' : `${formatScore(multi.score)} / 100`);
+  setText('mfs-multilingualism-details', multi?.by_language ? Object.entries(multi.by_language).map(([language, value]) => `${language}: ${formatScore(value)}`).join(' · ') : 'Deux langues annotées sont nécessaires.');
+  setText('mfs-errors', `${report.errors?.length || 0}`);
+  setText('mfs-errors-details', report.errors?.length ? report.errors.slice(0, 2).map(error => `Cas ${error.case}: ${error.error}`).join(' · ') : 'Aucune erreur de modèle signalée.');
+  const ring = document.querySelector('#evaluation-results .score-ring');
+  if (ring && Number.isFinite(Number(score))) {
+    const degrees = Math.max(0, Math.min(360, Number(score) * 3.6));
+    ring.style.background = `radial-gradient(circle at 50% 50%, rgba(24,217,255,.18) 0 36%, transparent 37%), conic-gradient(var(--cyan) 0deg ${degrees}deg, rgba(24,217,255,.15) ${degrees}deg 360deg)`;
+  }
+};
+
+if (evaluationFile) {
+  evaluationFile.addEventListener('change', () => {
+    const file = evaluationFile.files?.[0];
+    setText('evaluation-file-name', file ? file.name : 'Choisir un fichier annoté');
+  });
+}
+
+if (evaluationForm) {
+  evaluationForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const file = evaluationFile?.files?.[0];
+    if (!file) {
+      setStatus('Sélectionnez un dataset d’évaluation.', 'error');
+      return;
+    }
+    const criteria = [...evaluationForm.querySelectorAll('input[name="criterion"]:checked')].map(input => input.value).join(',');
+    const payload = new FormData();
+    payload.append('file', file);
+    payload.append('criteria', criteria);
+    payload.append('model_name', document.getElementById('model-name')?.value || '');
+    if (evaluateButton) {
+      evaluateButton.disabled = true;
+      evaluateButton.innerHTML = 'Évaluation en cours <span>…</span>';
+    }
+    setText('evaluation-status', 'Le modèle configuré est interrogé…');
+    try {
+      const response = await fetch(`${API_BASE_URL}/evaluate`, { method: 'POST', body: payload });
+      let body = {};
+      try { body = await response.json(); } catch (_) { /* réponse non JSON */ }
+      if (!response.ok) throw new Error(body.detail || `Erreur API (${response.status}).`);
+      renderMfs(body);
+      setText('evaluation-status', 'Évaluation terminée. Rapport MFS disponible ci-dessous.');
+    } catch (error) {
+      setText('evaluation-status', `${error.message} Vérifiez la configuration du modèle côté serveur.`, 'error');
+    } finally {
+      if (evaluateButton) {
+        evaluateButton.disabled = false;
+        evaluateButton.innerHTML = 'Évaluer le modèle <span>→</span>';
+      }
+    }
+  });
+}
+
 // Remove host-injected badge/HUD nodes if they appear after the page loads.
 const badgeSelectors = '#nl-badge, #netlify-badge, .netlify-badge, [id^="netlify-badge"], [class*="netlify-badge"], [data-netlify-badge]';
 const stripHostNodes = (root) => {

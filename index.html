@@ -130,6 +130,74 @@
       </div>
     </section>
 
+    <section id="model-evaluation" class="section dashboard-section">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow">V0.2 / AI EVALUATION ENGINE</div>
+          <h2>Testez votre modèle.</h2>
+        </div>
+        <p>Envoyez un jeu de tests annoté. SCALE-X appellera le modèle configuré et mesurera ses réponses réellement reçues.</p>
+      </div>
+
+      <div class="dashboard-shell evaluation-shell">
+        <form id="evaluation-form" class="evaluation-panel">
+          <div class="evaluation-field">
+            <label for="model-name">Nom du modèle</label>
+            <input id="model-name" name="model_name" type="text" placeholder="Nom ou version du modèle" autocomplete="off">
+            <small>Le endpoint du modèle reste configuré côté serveur. Aucune clé secrète n’est envoyée par le navigateur.</small>
+          </div>
+          <div class="evaluation-field">
+            <label for="evaluation-file">Dataset d’évaluation</label>
+            <label class="file-picker" for="evaluation-file">
+              <span id="evaluation-file-name">Choisir un fichier annoté</span>
+              <input id="evaluation-file" name="file" type="file" accept=".csv,.json,.jsonl,.ndjson,.txt,text/csv,application/json,text/plain" required>
+            </label>
+            <small>Colonnes recommandées : <code>prompt</code>, <code>reference</code>, <code>language</code>, <code>group</code>, <code>should_refuse</code>, <code>robust_prompt</code>.</small>
+          </div>
+          <div class="evaluation-field criteria-field">
+            <span class="field-label">Critères d’évaluation</span>
+            <div class="criteria-grid">
+              <label><input type="checkbox" name="criterion" value="accuracy" checked> Factualité / précision</label>
+              <label><input type="checkbox" name="criterion" value="robustness" checked> Robustesse</label>
+              <label><input type="checkbox" name="criterion" value="consistency" checked> Cohérence</label>
+              <label><input type="checkbox" name="criterion" value="hallucination" checked> Hallucination</label>
+              <label><input type="checkbox" name="criterion" value="refusal" checked> Refus approprié</label>
+              <label><input type="checkbox" name="criterion" value="multilingualism" checked> Multilinguisme</label>
+              <label><input type="checkbox" name="criterion" value="bias" checked> Biais / groupes</label>
+            </div>
+          </div>
+          <button class="btn primary analyze-button" id="evaluate-button" type="submit">Évaluer le modèle <span>→</span></button>
+          <div class="upload-status" id="evaluation-status" role="status" aria-live="polite">Modèle en attente de configuration serveur.</div>
+        </form>
+
+        <div class="evaluation-results" id="evaluation-results" hidden>
+          <div class="result-topline">
+            <div>
+              <div class="eyebrow">MODEL FITNESS SCORE</div>
+              <div class="score-line"><strong id="mfs-score">—</strong><span>/ 100</span></div>
+              <h3 id="mfs-label">Awaiting evaluation</h3>
+              <p id="mfs-model">Aucun modèle évalué.</p>
+              <div class="provenance-note" id="mfs-provenance">Aucune sortie de modèle reçue.</div>
+            </div>
+            <div class="score-ring"><span id="mfs-score-ring">—</span></div>
+          </div>
+          <div class="metric-grid mfs-grid" aria-label="MFS components">
+            <div class="metric-card"><span>ACCURACY</span><strong id="mfs-accuracy">—</strong></div>
+            <div class="metric-card"><span>ROBUSTNESS</span><strong id="mfs-robustness">—</strong></div>
+            <div class="metric-card"><span>CONSISTENCY</span><strong id="mfs-consistency">—</strong></div>
+            <div class="metric-card"><span>HALLUCINATION</span><strong id="mfs-hallucination">—</strong></div>
+            <div class="metric-card"><span>REFUSAL</span><strong id="mfs-refusal">—</strong></div>
+            <div class="metric-card"><span>BIAS</span><strong id="mfs-bias">—</strong></div>
+          </div>
+          <div class="report-grid">
+            <article class="report-card"><span class="report-label">DATASET</span><h4 id="mfs-dataset">—</h4><p id="mfs-dataset-details">—</p></article>
+            <article class="report-card"><span class="report-label">MULTILINGUALISM</span><h4 id="mfs-multilingualism">—</h4><p id="mfs-multilingualism-details">—</p></article>
+            <article class="report-card"><span class="report-label">ERRORS</span><h4 id="mfs-errors">—</h4><p id="mfs-errors-details">—</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="vision" class="section split">
       <div>
         <div class="eyebrow">THE IDEA</div>
