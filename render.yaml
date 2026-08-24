@@ -8,3 +8,11 @@ services:
     envVars:
       - key: FRONTEND_ORIGIN
         value: https://scale-x-ia.netlify.app
+      - key: MODEL_API_URL
+        sync: false
+      - key: MODEL_API_KEY
+        sync: false
+      - key: MODEL_NAME
+        sync: false
+      - key: MODEL_TIMEOUT_SECONDS
+        value: "60"
