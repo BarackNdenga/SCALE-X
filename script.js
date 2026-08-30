@@ -22,6 +22,30 @@ const setStatus = (message, tone = '') => {
   status.className = `upload-status ${tone}`.trim();
 };
 
+const setEvaluationStatus = (message, tone = '') => {
+  const status = document.getElementById('evaluation-status');
+  if (!status) return;
+  status.textContent = message;
+  status.className = `upload-status ${tone}`.trim();
+};
+
+const refreshModelStatus = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/model-config`, { headers: { Accept: 'application/json' } });
+    const config = await response.json();
+    if (!response.ok) throw new Error('API indisponible');
+    if (config.configured) {
+      setEvaluationStatus(`V0.2 disponible · modèle configuré : ${config.model || 'modèle actif'}`, 'ready');
+    } else {
+      setEvaluationStatus('V0.2 disponible · modèle non configuré sur Render.', 'error');
+    }
+  } catch (_) {
+    setEvaluationStatus('V0.2 disponible · API Render momentanément indisponible.', 'error');
+  }
+};
+
+refreshModelStatus();
+
 const renderReport = (report) => {
   const results = document.getElementById('dashboard-results');
   if (results) results.hidden = false;
