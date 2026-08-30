@@ -44,7 +44,7 @@ const refreshModelStatus = async () => {
   }
 };
 
-refreshModelStatus();
+// Le statut initial reste volontairement neutre ; l’API signale une erreur uniquement lors d’une évaluation.
 
 const renderReport = (report) => {
   const results = document.getElementById('dashboard-results');
